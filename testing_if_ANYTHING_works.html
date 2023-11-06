@@ -1,0 +1,81 @@
+<label for="minDate">Minimum Date:</label>
+<input type="date" id="minDate">
+
+<label for="maxDate">Maximum Date:</label>
+<input type="date" id="maxDate">
+
+<head>
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <div id="myDiv" style="width: 700px; height: 600px;"></div>
+
+    <script>
+        var defaultMinDate = new Date('2016-01-01');
+        var defaultMaxDate = new Date('2016-12-31');
+        
+        var minDateInput = document.getElementById("minDate");
+        var maxDateInput = document.getElementById("maxDate");
+        minDateInput.valueAsDate = defaultMinDate;
+        maxDateInput.valueAsDate = defaultMaxDate;
+
+        var layout = {
+            title: 'Time before vs. time after tweets',
+            xaxis: {
+                title: "time before",
+                type: 'log', // Set x-axis to log scale
+                tickvals: [0.1, 1, 10, 60, 3600, 86400, 864000],
+                ticktext: ['0 secs', '1 sec', '10 secs', '1 min', '1 hr', '1 day', '10 days']
+            },
+            yaxis: {
+                title: "time after",
+                type: 'log', // Set y-axis to log scale
+                tickvals: [0.1, 1, 10, 60, 3600, 86400, 864000],
+                ticktext: ['0 secs', '1 sec', '10 secs', '1 min', '1 hr', '1 day', '10 days']
+            }
+        };
+
+        function fetchDataAndPlot() {
+            Plotly.d3.csv("https://raw.githubusercontent.com/AnastasiaKratschmer/Ignorethisrepplease/main/tweets_with_time_diff.csv", function (data) {
+                processData(data);
+            });
+        }
+
+        function processData(allRows) {
+            var minDate = minDateInput.valueAsDate || defaultMinDate;
+            var maxDate = maxDateInput.valueAsDate || defaultMaxDate;
+
+            var filteredData = allRows.filter(function (row) {
+                var rowDate = new Date(row['date']);
+                return rowDate >= minDate && rowDate <= maxDate;
+            });
+
+            var x = filteredData.map(function (row) {
+                return parseFloat(row['time_before']);
+            });
+
+            var y = filteredData.map(function (row) {
+                return parseFloat(row['time_after']);
+            });
+
+            var trace = {
+                x: x,
+                y: y,
+                mode: "markers",
+                marker:{
+                   opacity:0.4,
+                   color:'magenta', 
+                }
+            };
+
+            Plotly.newPlot('myDiv', [trace], layout);
+        }
+
+        minDateInput.addEventListener("input", fetchDataAndPlot);
+        maxDateInput.addEventListener("input", fetchDataAndPlot);
+
+        fetchDataAndPlot(); // Initial plot
+    </script>
+</body>
